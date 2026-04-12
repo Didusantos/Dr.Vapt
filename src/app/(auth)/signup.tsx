@@ -1,3 +1,4 @@
+import { images } from "@/assets/images/index";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Link } from "expo-router";
@@ -23,10 +24,7 @@ export default function SignUp() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
-          <Image
-            source={require("@/app/assets/signup.png")}
-            style={styles.illustration}
-          />
+          <Image source={images.logoSignup} style={styles.illustration} />
 
           <Text style={styles.title}>Cadastrar</Text>
           <Text style={styles.subtitle}>
