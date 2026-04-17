@@ -57,7 +57,7 @@ export default function Index() {
               secureTextEntry={true}
               onChangeText={setPassword}
             />
-            <Button label="Entrar" onPress={handleSignIn} />
+            <Button color="#28a744" label="Entrar" onPress={handleSignIn} />
           </View>
 
           <Text style={styles.footerText}>

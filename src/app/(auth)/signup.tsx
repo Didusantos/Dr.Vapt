@@ -36,7 +36,7 @@ export default function SignUp() {
             <Input placeholder="E-mail" keyboardType="email-address" />
             <Input placeholder="Senha" secureTextEntry={true} />
             <Input placeholder="Confirmar Senha" secureTextEntry={true} />
-            <Button label="Cadastrar" />
+            <Button color="#28a744" label="Cadastrar" />
           </View>
 
           <Text style={styles.footerText}>

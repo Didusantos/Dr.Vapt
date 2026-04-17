@@ -7,11 +7,16 @@ import {
 
 type ButtonProps = TouchableOpacityProps & {
   label: string;
+  color: string;
 };
 
-export function Button({ label, ...rest }: ButtonProps) {
+export function Button({ label, color, ...rest }: ButtonProps) {
   return (
-    <TouchableOpacity style={styles.container} activeOpacity={0.6} {...rest}>
+    <TouchableOpacity
+      style={[styles.container, { backgroundColor: color }]}
+      activeOpacity={0.6}
+      {...rest}
+    >
       <Text style={styles.label}>{label}</Text>
     </TouchableOpacity>
   );
@@ -21,7 +26,6 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
     height: 48,
-    backgroundColor: "#28a744",
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
