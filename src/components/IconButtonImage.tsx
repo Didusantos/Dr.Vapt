@@ -38,6 +38,7 @@ export function IconButtonImage({
           icon={imageIcon}
           iconColor={MD3Colors[iconColor]}
           size={20}
+          {...rest}
         />
       </View>
     </TouchableOpacity>

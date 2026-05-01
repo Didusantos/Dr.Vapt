@@ -6,7 +6,7 @@ type CustomTextProps = TextProps & {
   label: string;
 };
 
-export function SwitchButton({ label, ...rest }: CustomTextProps) {
+export function SwitchButton({ label }: CustomTextProps) {
   const [isSwitchOn, setIsSwitchOn] = React.useState(false);
   const onToggleSwitch = () => setIsSwitchOn(!isSwitchOn);
   return (
