@@ -1,8 +1,10 @@
 import { images } from "@/assets/images/index";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
+import { AuthContext } from "@/contexts/AuthContext";
+import { useUserDatabase } from "@/database/useUsersDatabase";
 import { Link, router } from "expo-router";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import {
   Alert,
   Image,
@@ -15,18 +17,31 @@ import {
 } from "react-native";
 
 export default function Index() {
+  const userDatabase = useUserDatabase();
+
+  const { signIn } = useContext(AuthContext);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  function handleSignIn() {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert("Login Error", "Preencha todos os campos");
-    } else {
-      (Alert.alert(
-        "Login sucess",
-        `Login realizado com sucesso com as seguintes informações: \n\nEmail: ${email} \nSenha: ${password}}`,
-      ),
-        router.replace("/(tabs)"));
+  async function handleLogin() {
+    try {
+      if (!email.trim() || !password.trim()) {
+        Alert.alert("Erro de login", "Preencha todos os campos");
+        return;
+      }
+
+      const user = await userDatabase.login(email, password);
+
+      if (user) {
+        signIn(user);
+        router.replace("/(tabs)");
+      } else {
+        Alert.alert("Erro de login", "E-mail ou senha incorretos");
+      }
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Falha sistêmica", "Erro ao fazer login");
     }
   }
 
@@ -57,7 +72,7 @@ export default function Index() {
               secureTextEntry={true}
               onChangeText={setPassword}
             />
-            <Button color="#28a744" label="Entrar" onPress={handleSignIn} />
+            <Button color="#28a744" label="Entrar" onPress={handleLogin} />
           </View>
 
           <Text style={styles.footerText}>

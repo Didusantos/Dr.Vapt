@@ -1,8 +1,12 @@
 import { images } from "@/assets/images/index";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
-import { Link } from "expo-router";
+import { AuthContext } from "@/contexts/AuthContext";
+import { useUserDatabase } from "@/database/useUsersDatabase";
+import { Link, router } from "expo-router";
+import { useContext, useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +17,42 @@ import {
 } from "react-native";
 
 export default function SignUp() {
+  const userDatabase = useUserDatabase();
+  const { signIn } = useContext(AuthContext);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  async function createUser() {
+    try {
+      if (!name.trim() || !email.trim() || !password.trim()) {
+        Alert.alert(
+          "Preencha todos os campos",
+          "Por favor, preencha todos os campos antes de prosseguir.",
+        );
+        return;
+      }
+      if (password !== confirmPassword) {
+        Alert.alert(
+          "As senhas não coincidem",
+          "Por favor, verifique as senhas e tente novamente.",
+        );
+        return;
+      }
+
+      await userDatabase.createUser({ name, email, password });
+      const newUser = await userDatabase.login(email, password);
+
+      if (newUser) {
+        signIn(newUser);
+        router.replace("/(tabs)");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -32,11 +72,23 @@ export default function SignUp() {
           </Text>
 
           <View style={styles.form}>
-            <Input placeholder="Nome" />
-            <Input placeholder="E-mail" keyboardType="email-address" />
-            <Input placeholder="Senha" secureTextEntry={true} />
-            <Input placeholder="Confirmar Senha" secureTextEntry={true} />
-            <Button color="#28a744" label="Cadastrar" />
+            <Input placeholder="Nome" onChangeText={setName} />
+            <Input
+              placeholder="E-mail"
+              keyboardType="email-address"
+              onChangeText={setEmail}
+            />
+            <Input
+              placeholder="Senha"
+              secureTextEntry={true}
+              onChangeText={setPassword}
+            />
+            <Input
+              placeholder="Confirmar Senha"
+              secureTextEntry={true}
+              onChangeText={setConfirmPassword}
+            />
+            <Button color="#28a744" label="Cadastrar" onPress={createUser} />
           </View>
 
           <Text style={styles.footerText}>
