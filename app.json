@@ -42,7 +42,8 @@
         {
           "cameraPermission": "O aplicativo precisa acessar a câmera para que a IA analise seus sintomas visuais."
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true
