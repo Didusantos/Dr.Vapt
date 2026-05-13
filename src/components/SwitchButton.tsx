@@ -4,15 +4,27 @@ import { Switch } from "react-native-paper";
 
 type CustomTextProps = TextProps & {
   label: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
 };
 
-export function SwitchButton({ label }: CustomTextProps) {
-  const [isSwitchOn, setIsSwitchOn] = React.useState(false);
-  const onToggleSwitch = () => setIsSwitchOn(!isSwitchOn);
+export function SwitchButton({
+  label,
+  value,
+  onValueChange,
+  ...rest
+}: CustomTextProps) {
   return (
     <View style={styles.container}>
-      <Switch value={isSwitchOn} onValueChange={onToggleSwitch} />
-      <Text>{label}</Text>
+      <Switch
+        value={value}
+        onValueChange={() => {
+          onValueChange(!value);
+        }}
+      />
+      <Text style={styles.label} {...rest}>
+        {label}
+      </Text>
     </View>
   );
 }

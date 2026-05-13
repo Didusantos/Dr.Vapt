@@ -3,8 +3,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableOpacityProps,
-  View,
+  TouchableOpacityProps
 } from "react-native";
 import { IconButton, MD3Colors } from "react-native-paper";
 
@@ -26,21 +25,19 @@ export function IconButtonImage({
   ...rest
 }: IconButtonProps) {
   return (
-    <TouchableOpacity>
-      <View
-        style={[
-          styles.container,
-          { backgroundColor: btnColor, borderRadius: border },
-        ]}
-      >
-        <Text style={[styles.label, { color: textColor }]}>{label}</Text>
-        <IconButton
-          icon={imageIcon}
-          iconColor={MD3Colors[iconColor]}
-          size={20}
-          {...rest}
-        />
-      </View>
+    <TouchableOpacity
+      style={[
+        styles.container,
+        { backgroundColor: btnColor, borderRadius: border },
+      ]}
+    >
+      <Text style={[styles.label, { color: textColor }]}>{label}</Text>
+      <IconButton
+        icon={imageIcon}
+        iconColor={MD3Colors[iconColor]}
+        size={20}
+        {...rest}
+      />
     </TouchableOpacity>
   );
 }
