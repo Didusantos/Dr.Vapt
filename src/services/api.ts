@@ -1,4 +1,4 @@
-const BASE_URL = "LINK DO SERVIDOR";
+const BASE_URL = "LINK DA API";
 
 export const api = {
   transcreverAudio: async (fileUri: string): Promise<string> => {
@@ -63,6 +63,7 @@ export const api = {
   pesquisarResult: async (
     sintomas_digitados: string,
     analise_imagem: string,
+    additionalContent?: string,
   ): Promise<string> => {
     const response = await fetch(`${BASE_URL}/analisar-correspondencia`, {
       method: "POST",
@@ -72,6 +73,7 @@ export const api = {
       body: JSON.stringify({
         sintomas_digitados,
         analise_imagem,
+        additionalContent,
       }),
     });
 
