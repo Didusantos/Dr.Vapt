@@ -1,4 +1,7 @@
+import { AuthProvider } from "@/contexts/AuthContext";
+import { initializeDatabase } from "@/database/initializeDatabase";
 import { Stack, useRouter } from "expo-router";
+import { SQLiteProvider } from "expo-sqlite";
 import { useEffect } from "react";
 
 export default function RootLayout() {
@@ -8,15 +11,37 @@ export default function RootLayout() {
   useEffect(() => {
     if (isUserLoggedIn) {
       setTimeout(() => {
-        router.replace("/(tabs)");
+        router.replace("/(auth)");
       }, 0);
     }
   }, [isUserLoggedIn]);
 
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-    </Stack>
+    <SQLiteProvider databaseName="DR-VAPT.db" onInit={initializeDatabase}>
+      <AuthProvider>
+        <Stack>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+          <Stack.Screen
+            name="familyModal"
+            options={{
+              presentation: "modal",
+              title: "Novo familiar",
+              headerStyle: { backgroundColor: "blue" },
+            }}
+          />
+
+          <Stack.Screen
+            name="medicationModal"
+            options={{
+              presentation: "modal",
+              title: "Novo medicamento",
+              headerStyle: { backgroundColor: "blue" },
+            }}
+          />
+        </Stack>
+      </AuthProvider>
+    </SQLiteProvider>
   );
 }
