@@ -1,5 +1,9 @@
 import { Button } from "@/components/Button";
+import { AuthContext } from "@/contexts/AuthContext";
+import { router } from "expo-router";
+import { useContext } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -9,6 +13,7 @@ import {
 } from "react-native";
 
 export default function ProfileScreen() {
+  const { user } = useContext(AuthContext);
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -21,29 +26,63 @@ export default function ProfileScreen() {
       >
         <View style={styles.container}>
           <View>
-            <Text style={styles.userName}>(), Bem vindo!</Text>
+            <Text style={styles.userName}>{user?.name}, Bem vindo!</Text>
             <Text style={styles.subtitle}>Informações de usuário</Text>
           </View>
 
           <View style={styles.infoContainer}>
-            <Text style={styles.infoText}>Nome de usuário: ()</Text>
-            <Text style={styles.infoText}>E-mail: ()</Text>
-            <Text style={styles.infoText}>Data de nascimento: ()</Text>
-            <Text style={styles.infoText}>Sexo: ()</Text>
-            <Text style={styles.infoText}>Altura: ()</Text>
-            <Text style={styles.infoText}>Peso: ()</Text>
+            <Text style={styles.infoText}>Nome de usuário: {user?.name}</Text>
+            <Text style={styles.infoText}>E-mail: {user?.email}</Text>
           </View>
 
           <Button label="Editar perfil" color="blue" />
 
           <View style={styles.infoContainer}>
-            <Text>Meu histórico</Text>
-            <Text>Gerenciar notificações</Text>
-            <Text>Vincular familiares</Text>
-            <Text>Ajuda</Text>
+            <Text
+              style={styles.link}
+              onPress={() => {
+                router.replace("/(tabs)/historic");
+              }}
+            >
+              Meu histórico
+            </Text>
+            <Text
+              style={styles.link}
+              onPress={() => {
+                router.replace("/(tabs)/family");
+              }}
+            >
+              Vincular familiares
+            </Text>
+            <Text
+              style={styles.link}
+              onPress={() => {
+                router.replace("/(tabs)/medications");
+              }}
+            >
+              Medicamentos
+            </Text>
+
+            <Text
+              style={styles.link}
+              onPress={() => {
+                Alert.alert(
+                  "Ajuda e suporte",
+                  "Entre em contato com o administrador do projeto",
+                );
+              }}
+            >
+              Ajuda e suporte
+            </Text>
           </View>
 
-          <Button label="Sair" color="blue" />
+          <Button
+            label="Sair"
+            color="blue"
+            onPress={() => {
+              router.replace("/(auth)");
+            }}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -78,5 +117,10 @@ const styles = StyleSheet.create({
   infoText: {
     fontFamily: "Roboto",
     fontSize: 16,
+  },
+  link: {
+    textDecorationColor: "blue",
+    textDecorationLine: "underline",
+    textDecorationStyle: "solid",
   },
 });

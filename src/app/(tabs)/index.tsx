@@ -3,7 +3,7 @@ import { IconButtonImage } from "@/components/IconButtonImage";
 import { Input } from "@/components/Input";
 import { SwitchButton } from "@/components/SwitchButton";
 import { CameraView } from "expo-camera";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,16 +14,26 @@ import {
   View,
 } from "react-native";
 
+import { AuthContext } from "@/contexts/AuthContext";
+import { useFamilyMemberDatabase } from "@/database/useFamilyMemberDatabase";
+import { useHistoricDatabase } from "@/database/useHistoricDatabase";
+
 import { useAudioTranscription } from "@/hooks/useAudioTranscription";
 import { useCamera } from "@/hooks/useCamera";
 import { api } from "@/services/api";
 
 export default function Index() {
+  const { user } = useContext(AuthContext);
+  const historicDatabase = useHistoricDatabase();
+  const familyDatabase = useFamilyMemberDatabase();
+
   const [sintomas, setSintomas] = useState("");
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResult] = useState("");
   const [analiseFoto, setAnaliseFoto] = useState("");
+  const [usePersonalHistory, setUsePersonalHistory] = useState(false);
+  const [useFamilyHistory, setUseFamilyHistory] = useState(false);
 
   const {
     permission,
@@ -50,7 +60,7 @@ export default function Index() {
         const response = await api.analisarImagem(imageUri, sintomas);
         console.log(response);
         setAnaliseFoto(response);
-        Alert.alert("Sucesso", "Imagem enviada com sucesso. Clique em enviar.");
+        Alert.alert("Sucesso", "Imagem enviada e analisada com sucesso.");
       } catch (error) {
         console.log(error);
         Alert.alert("Erro", "Não foi possível analisar a imagem enviada.");
@@ -60,12 +70,26 @@ export default function Index() {
     }
   };
 
+  async function handleHistoric(ai_diagnosis: string) {
+    if (!user?.id) return;
+
+    try {
+      await historicDatabase.createHistoric(
+        user.id,
+        null,
+        sintomas,
+        ai_diagnosis,
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   if (isCameraOpen) {
     if (!permission?.granted)
       return (
         <View style={styles.centerContainer}>
           <Text style={{ textAlign: "center", marginBottom: 20 }}>
-            {" "}
             Precisamos de permissão para acessar a câmera.
           </Text>
           <Button label="Dar Permissão" color="blue" onPress={setPermission} />
@@ -107,19 +131,62 @@ export default function Index() {
 
   const handleEnviarResultados = async () => {
     if (!sintomas) {
-      Alert.alert("Aviso", "Por favor, informe os sintomas atuais.");
+      Alert.alert(
+        "Aviso",
+        "Por favor, informe os sintomas atuais antes de prosseguir com a análise.",
+      );
       return;
     }
+
+    if (!user?.id) return;
 
     setIsAnalyzing(true);
 
     try {
+      let additionalContent = "";
+
+      if (usePersonalHistory) {
+        const historic = await historicDatabase.getHistoric(user.id);
+        if (historic.length > 0) {
+          additionalContent += "Histórico pessoal do paciente:\n";
+          const lastHistoric = historic.slice(0, 3);
+
+          lastHistoric.forEach((item) => {
+            additionalContent += `Sintomas: ${item.symptoms_reported} | Diagnóstico: ${item.ai_diagnosis}\n`;
+          });
+        }
+      }
+
+      if (useFamilyHistory) {
+        const family = await familyDatabase.getFamilyMember(user.id);
+        if (family.length > 0) {
+          additionalContent += "\n Histórico familiar (Doenças registradas):\n";
+          family.forEach((fam) => {
+            additionalContent += `- Parentesco: ${fam.relationship} | Doença: ${fam.disease}\n`;
+          });
+        }
+      }
       const textoImagem = analiseFoto ? analiseFoto : "Nenhuma imagem enviada";
 
-      console.log("Enviado sintomas para análise...");
-      const diagnostico = await api.pesquisarResult(sintomas, textoImagem);
+      console.log("Enviando sintomas para análise...");
+      Alert.alert(
+        "Status de solicitação",
+        "Estamos enviando as informações fornecidas para análise. Aguarde retorno.",
+      );
+      const diagnostico = await api.pesquisarResult(
+        sintomas,
+        textoImagem,
+        additionalContent,
+      );
 
       setResult(diagnostico);
+
+      await handleHistoric(diagnostico);
+
+      Alert.alert(
+        "Sucesso",
+        "Análise finalizada e histórico de pesquisa enviado.",
+      );
     } catch (error) {
       console.log(error);
       Alert.alert("Erro", "Não foi possível enviar os sintomas para análise.");
@@ -139,22 +206,22 @@ export default function Index() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
-          <Text style={styles.title}>Auto Atendimento - Sistema</Text>
+          <Text style={styles.title}>Autoatendimento Particular</Text>
 
           <View style={styles.form}>
             <View style={styles.formGroup}>
               <Text>Sintomas atuais</Text>
               <Input
-                placeholder="Digite os seus sintomas atuais"
+                placeholder="Digite os sintomas atuais"
                 value={sintomas}
                 onChangeText={setSintomas}
               />
               <Button
                 label={
                   transcription
-                    ? "Transcrevendo..."
+                    ? "Transcrevendo áudio..."
                     : recording
-                      ? "Parar"
+                      ? "Interromper transcrição de áudio"
                       : "Usar transcrição de áudio"
                 }
                 color={recording ? "red" : transcription ? "gray" : "purple"}
@@ -164,9 +231,21 @@ export default function Index() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text>Opções de histórico</Text>
-              <SwitchButton label="Familiares" />
-              <SwitchButton label="Histórico pessoal" />
+              <Text>Conteúdo adicional - Opções de histórico</Text>
+              <SwitchButton
+                label="Histórico familiar"
+                value={useFamilyHistory}
+                onValueChange={setUseFamilyHistory}
+              />
+              <SwitchButton
+                label="Histórico pessoal - Últimas 3 análises"
+                value={usePersonalHistory}
+                onValueChange={setUsePersonalHistory}
+              />
+              <Text style={styles.infoText}>
+                Um histórico pessoal ou familiar nos ajuda a entender se há
+                relação com o que você está sentindo agora.
+              </Text>
             </View>
 
             <View style={styles.formGroup}>
@@ -175,20 +254,23 @@ export default function Index() {
                 textColor="#fff"
                 border={8}
                 btnColor="blue"
-                label="Adicionar imagens"
+                label={isAnalyzing ? "Analisando imagem..." : "Enviar imagem"}
                 iconColor="primary100"
                 imageIcon="camera"
                 onPress={() => setIsCameraOpen(true)}
                 disabled={isAnalyzing}
               />
-              <Text>OBS: Uma imagem ajuda a garantir melhor precisão</Text>
+              <Text style={styles.infoText}>
+                Uma imagem nos ajuda a garantir maior precisão de informações e
+                sintomas para análise.
+              </Text>
             </View>
 
             <Button
-              label={isAnalyzing ? "Analisando..." : "Enviar"}
+              label={isAnalyzing ? "Aguardando analisé..." : "Enviar"}
               onPress={handleEnviarResultados}
               disabled={isAnalyzing}
-              color="red"
+              color="blue"
             />
             {results ? (
               <View style={styles.resultBox}>
@@ -252,5 +334,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     lineHeight: 22,
+  },
+  infoText: {
+    color: "#D3D3D3",
+    fontWeight: 200,
+    textAlign: "center",
   },
 });

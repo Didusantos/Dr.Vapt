@@ -1,88 +1,83 @@
-import { Button } from "@/components/Button";
+import { AuthContext } from "@/contexts/AuthContext";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  historicContent,
+  useHistoricDatabase,
+} from "@/database/useHistoricDatabase";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useContext, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 
-import { IconButtonImage } from "@/components/IconButtonImage";
-
 export default function HistoricScreen() {
+  const { user } = useContext(AuthContext);
+  const historicDatabase = useHistoricDatabase();
+
+  const [historic, setHistoric] = useState<historicContent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function loadHistoric() {
+        if (!user?.id) return;
+
+        try {
+          setIsLoading(true);
+          const data = await historicDatabase.getHistoric(user.id);
+          setHistoric(data);
+        } catch (error) {
+          console.log(error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+      loadHistoric();
+    }, [user?.id]),
+  );
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.select({ ios: "padding", android: "height" })}
-    >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
+    <View style={styles.container}>
+      <Text style={styles.title}>Histórico</Text>
+
+      <FlatList
+        data={historic}
+        keyExtractor={(item) => String(item.id)}
         showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.container}>
-          <Text style={styles.title}>Histórico</Text>
+        contentContainerStyle={styles.historicContainer}
+        ListEmptyComponent={() => <Text>Nenhum histórico encontrado.</Text>}
+        renderItem={({ item }) => (
+          <View style={styles.historicList}>
+            <Text>
+              Paciente:{" "}
+              {item.family_member_name
+                ? item.family_member_name
+                : item.user_name}
+            </Text>
 
-          <View style={styles.historicContainer}>
-            <IconButtonImage
-              textColor="#fff"
-              border={0}
-              btnColor="blue"
-              label="Adicionar novo registro"
-              iconColor="error100"
-              imageIcon="plus-circle-outline"
-            />
+            <Text>Sintomas: {item.symptoms_reported}</Text>
 
-            <Text>Registros</Text>
-            <View style={styles.historicList}>
-              <IconButtonImage
-                textColor="black"
-                border={0}
-                btnColor=""
-                label="Registro {1}"
-                iconColor="neutral10"
-                imageIcon="pencil-circle-outline"
-              />
-              <IconButtonImage
-                textColor="black"
-                border={0}
-                btnColor=""
-                label="Registro {1}"
-                iconColor="neutral10"
-                imageIcon="pencil-circle-outline"
-              />
-              <IconButtonImage
-                textColor="black"
-                border={0}
-                btnColor=""
-                label="Registro {1}"
-                iconColor="neutral10"
-                imageIcon="pencil-circle-outline"
-              />
-              <IconButtonImage
-                textColor="black"
-                border={0}
-                btnColor=""
-                label="Registro {1}"
-                iconColor="neutral10"
-                imageIcon="pencil-circle-outline"
-              />
-              <IconButtonImage
-                textColor="black"
-                border={0}
-                btnColor=""
-                label="Registro {1}"
-                iconColor="neutral10"
-                imageIcon="pencil-circle-outline"
-              />
-            </View>
+            <Text>Diagnóstico por IA: {item.ai_diagnosis}</Text>
 
-            <Button label="Salvar" color="blue" />
+            <Text>
+              Data de pesquisa:{" "}
+              {new Date(item.created_at).toLocaleDateString("pt-BR")}
+            </Text>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        )}
+      />
+    </View>
   );
 }
 
@@ -110,5 +105,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderColor: "#DCDCDC",
     borderWidth: 1,
+  },
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
